@@ -28,10 +28,11 @@ DAY = ("all",
        "saturday",
        "sunday")
 
+
 class QueryTimer:
+    """ doc string goes here """
     overall_time = 0
 
-    """ doc string goes here """
     def set_start_time(self, time):
         self.start_time = time
 
@@ -41,7 +42,7 @@ class QueryTimer:
         QueryTimer.overall_time += self.total_time
 
     def get_total_time(self):
-        return f"This took {round(self.total_time, 2)} seconds.".format()
+        return f"This took {round(self.total_time, 2)} seconds."
 
 
 def get_user_input(prompt, validation_list):
@@ -52,17 +53,25 @@ def get_user_input(prompt, validation_list):
     print("-" * len(prompt))
 
     while True:
-        output = input().strip().lower()
+        user_input = list(map(str.strip, input().lower().split(",")))
 
-        if output == "view":
+        if "view" in user_input:
             print(", ".join(list(x.title() for x in validation_list)))
-        elif output in validation_list:
+            continue
+        elif "all" in user_input:
+            return validation_list
+        elif verify_user_input(user_input, validation_list):
             break
         else:
-            print("Please enter a valid input: ")
+            print("Please enter valid input parameters: ")
 
-    return output
+    return user_input
 
+def verify_user_input(user_input, validation_list):
+    for i in user_input:
+        if not i in validation_list:
+            return False
+    return True
 
 def get_filters():
     """
@@ -73,17 +82,21 @@ def get_filters():
         (str) month - name of the month to filter by, or "all" to apply no month filter
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     """
-    print('Welcome! Let\'s explore some US bikeshare data!')
+    print('\nWelcome! Let\'s explore some US bikeshare data!\n')
+    print("Please input any multiple selections in a comma seperated list")
     # get user input for city (chicago, new york city, washington). HINT: Use a while loop to handle invalid inputs
-    city = get_user_input("Which city would you like to view?",
+    city = get_user_input("Which city would you like to view? (Please select only one)",
                     CITY)
 
+    if len(city) > 1:
+        print(f"Multiple city selections made, only {str(city[0]).title()} will be used...")
+
     # get user input for month (all, january, february, ... , june)
-    month = get_user_input("\nPlease selet a month or type 'all':",
+    month = get_user_input("\nPlease select month(s) or type 'all':",
                             MONTH)
 
     # get user input for day of week (all, monday, tuesday, ... sunday)
-    day = get_user_input("\nPlease select a day of the week or type 'all':",
+    day = get_user_input("\nPlease select day(s) of the week or type 'all':",
                             DAY)
 
     return city, month, day
@@ -100,7 +113,7 @@ def load_data(city, month, day):
     Returns:
         df - Pandas DataFrame containing city data filtered by month and day
     """
-    file_path = "data/" + str(CITY_DATA[city]).replace(" ", "_")
+    file_path = "data/" + str(CITY_DATA[city[0]]).replace(" ", "_")
     
     if os.path.exists(file_path):
         try:
@@ -109,10 +122,14 @@ def load_data(city, month, day):
             print("Error loading bikeshare data")
             return None
     else:
-        print("Bikeshare data not found")
+        print(f"Bikeshare data not found in {file_path}")
         return None
 
-    # filter the data
+    return apply_filters(df, month, day)
+
+
+def apply_filters(df, month, day):
+    """ doc string here """
     if not month == "all":
         pass
     if not day == "all":
@@ -126,7 +143,7 @@ def time_stats(df):
 
     print('\nCalculating The Most Frequent Times of Travel...\n')
     qt = QueryTimer()
-    qt.set_end_time(time.time())
+    qt.set_start_time(time.time())
 
     # display the most common month
 
@@ -139,7 +156,6 @@ def time_stats(df):
     qt.set_end_time(time.time())
     print(qt.get_total_time())
     print('-'*40)
-
 
 def station_stats(df):
     """Displays statistics on the most popular stations and trip."""
@@ -209,7 +225,7 @@ def main():
             trip_duration_stats(df)
             user_stats(df)
             total_execution_time = round(QueryTimer.overall_time, 2)
-            print(f"Total execution time: {total_execution_time} seconds".format())
+            print(f"Total execution time: {total_execution_time} seconds.")
         else:
             print("Dataset returned no results or is empty.")
 
