@@ -41,7 +41,7 @@ class QueryTimer:
         QueryTimer.overall_time += self.total_time
 
     def get_total_time(self):
-        return f"This took {round(self.total_time, 2)} seconds".format()
+        return f"This took {round(self.total_time, 2)} seconds.".format()
 
 
 def get_user_input(prompt, validation_list):
@@ -125,7 +125,8 @@ def time_stats(df):
     """Displays statistics on the most frequent times of travel."""
 
     print('\nCalculating The Most Frequent Times of Travel...\n')
-    start_time = time.time()
+    qt = QueryTimer()
+    qt.set_end_time(time.time())
 
     # display the most common month
 
@@ -135,8 +136,8 @@ def time_stats(df):
 
     # display the most common start hour
 
-
-    print("\nThis took %s seconds." % (time.time() - start_time))
+    qt.set_end_time(time.time())
+    print(qt.get_total_time())
     print('-'*40)
 
 
@@ -144,7 +145,8 @@ def station_stats(df):
     """Displays statistics on the most popular stations and trip."""
 
     print('\nCalculating The Most Popular Stations and Trip...\n')
-    start_time = time.time()
+    qt = QueryTimer()
+    qt.set_start_time(time.time())
 
     # display most commonly used start station
 
@@ -154,8 +156,8 @@ def station_stats(df):
 
     # display most frequent combination of start station and end station trip
 
-
-    print("\nThis took %s seconds." % (time.time() - start_time))
+    qt.set_end_time(time.time())
+    print(qt.get_total_time())
     print('-'*40)
 
 
@@ -163,15 +165,16 @@ def trip_duration_stats(df):
     """Displays statistics on the total and average trip duration."""
 
     print('\nCalculating Trip Duration...\n')
-    start_time = time.time()
+    qt = QueryTimer()
+    qt.set_start_time(time.time())
 
     # display total travel time
 
 
     # display mean travel time
 
-
-    print("\nThis took %s seconds." % (time.time() - start_time))
+    qt.set_end_time(time.time())
+    print(qt.get_total_time())
     print('-'*40)
 
 
@@ -179,7 +182,8 @@ def user_stats(df):
     """Displays statistics on bikeshare users."""
 
     print('\nCalculating User Stats...\n')
-    start_time = time.time()
+    qt = QueryTimer()
+    qt.set_start_time(time.time())
 
     # Display counts of user types
 
@@ -189,8 +193,8 @@ def user_stats(df):
 
     # Display earliest, most recent, and most common year of birth
 
-
-    print("\nThis took %s seconds." % (time.time() - start_time))
+    qt.set_end_time(time.time())
+    print(qt.get_total_time())
     print('-'*40)
 
 
@@ -206,6 +210,8 @@ def main():
             user_stats(df)
             total_execution_time = round(QueryTimer.overall_time, 2)
             print(f"Total execution time: {total_execution_time} seconds".format())
+        else:
+            print("Dataset returned no results or is empty.")
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
