@@ -3,24 +3,22 @@ import os.path
 import pandas as pd
 import numpy as np
 
-CITY_DATA = { 'chicago': 'chicago.csv',
-              'new york city': 'new_york_city.csv',
-              'washington': 'washington.csv' }
+CITY_DATA = {'chicago': 'chicago.csv',
+             'new york city': 'new_york_city.csv',
+             'washington': 'washington.csv' }
 
 CITY = ("chicago",
         "new york city",
         "washington")
 
-MONTH = ("all", 
-         "january", 
+MONTH = ("january", 
          "february",
          "march", 
          "april", 
          "may", 
          "june")
 
-DAY = ("all",
-       "monday",
+DAY = ("monday",
        "tuesday",
        "wednesday",
        "thursday",
@@ -30,7 +28,12 @@ DAY = ("all",
 
 
 class QueryTimer:
-    """ doc string goes here """
+    """ 
+    class to log run time of panda functions
+    log start and end time to auto-calculate total running time
+    stores class variable 'overall_time' to keep track of overall total running time
+    for all instances of QueryTimer class
+    """
     overall_time = 0
 
     def set_start_time(self, time):
@@ -125,15 +128,27 @@ def load_data(city, month, day):
         print(f"Bikeshare data not found in {file_path}")
         return None
 
+    # check if any columns contain NaN data
+    print(df.isnull().any())
+
     return apply_filters(df, month, day)
 
 
 def apply_filters(df, month, day):
     """ doc string here """
-    if not month == "all":
-        pass
-    if not day == "all":
-        pass
+
+    # apply column formatting - move to new function
+    df['Start Time'] = pd.to_datetime(df['Start Time'])
+    df['End Time'] = pd.to_datetime(df['End Time'])
+    df['day'] = df['Start Time'].dt.day
+    df['month'] = df['Start Time'].dt.month_name()
+    df['day_of_week'] = df['Start Time'].dt.weekday_name
+    df['hour'] = df['Start Time'].dt.hour
+
+    df = df[df["month"].isin([i.title() for i in month])]
+    df = df[df["day_of_week"].isin([d.title() for d in day])]
+
+    print(df.head(10))
 
     return df
 
@@ -228,6 +243,11 @@ def main():
             print(f"Total execution time: {total_execution_time} seconds.")
         else:
             print("Dataset returned no results or is empty.")
+
+        user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
+        if user_answer[0].lower() == 'y':
+            # function to show 5 rows of raw data at time - use generator?
+            pass
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
