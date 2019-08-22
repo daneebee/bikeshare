@@ -33,6 +33,12 @@ class QueryTimer:
     log start and end time to auto-calculate total running time
     stores class variable 'overall_time' to keep track of overall total running time
     for all instances of QueryTimer class
+
+    Methods:
+        set_start_time - log function start time
+        set_end_time - log function end time, total time and overall time
+                       of all functions run so far
+        get_total_time - return f string of total function run time
     """
     overall_time = 0
 
@@ -71,6 +77,9 @@ def get_user_input(prompt, validation_list):
     return user_input
 
 def verify_user_input(user_input, validation_list):
+    ''' 
+    Check if user input exists in predefined tuples
+    '''
     for i in user_input:
         if not i in validation_list:
             return False
@@ -91,6 +100,7 @@ def get_filters():
     city = get_user_input("Which city would you like to view? (Please select only one)",
                     CITY)
 
+    # if user types in multiple cities, take first selection only
     if len(city) > 1:
         print(f"Multiple city selections made, only {str(city[0]).title()} will be used...")
 
@@ -128,16 +138,25 @@ def load_data(city, month, day):
         print(f"Bikeshare data not found in {file_path}")
         return None
 
-    # check if any columns contain NaN data
+    # check if any columns contain NaN data - TESTING
     print(df.isnull().any())
 
-    return apply_filters(df, month, day)
+    return df
 
 
 def apply_filters(df, month, day):
-    """ doc string here """
+    """ 
+    Applies uer selected filters for month(s) and day(s) to dataframe
+    
+    Args:
+        (DataFrame) df - DataFrame to be filtered
+        (list) month - Selected month(s)
+        (list) day - Selected day(s)
+    Returns:
+        DataFrame
+     """
 
-    # apply column formatting - move to new function
+    # add derived columns for filtering of data
     df['Start Time'] = pd.to_datetime(df['Start Time'])
     df['End Time'] = pd.to_datetime(df['End Time'])
     df['day'] = df['Start Time'].dt.day
@@ -145,10 +164,9 @@ def apply_filters(df, month, day):
     df['day_of_week'] = df['Start Time'].dt.weekday_name
     df['hour'] = df['Start Time'].dt.hour
 
+    # apply user selected filters for month(s) and day(s)
     df = df[df["month"].isin([i.title() for i in month])]
     df = df[df["day_of_week"].isin([d.title() for d in day])]
-
-    print(df.head(10))
 
     return df
 
@@ -161,8 +179,8 @@ def time_stats(df):
     qt.set_start_time(time.time())
 
     # display the most common month
-
-
+    if df['month'].value_counts() == 1:
+        pass
     # display the most common day of week
 
 
@@ -229,19 +247,35 @@ def user_stats(df):
     print('-'*40)
 
 
+def print_dataframe(df, rows):
+    '''
+    prints dataframe in n row chunks and asks user to either print next 5 lines or quit
+
+    Args:
+        (DataFrame) df - takes a single dataframe to print out to the screen
+        (int) rows - how many rows to print
+
+    Yields: 5 rows of the dataframe object
+    '''
+    for row in df.iterrows():
+        pass
+
+
 def main():
     while True:
         city, month, day = get_filters()
         df = load_data(city, month, day)
+        df = apply_filters(df, month, day)
 
-        if not df is None:
+
+        try:
             time_stats(df)
             station_stats(df)
             trip_duration_stats(df)
             user_stats(df)
             total_execution_time = round(QueryTimer.overall_time, 2)
             print(f"Total execution time: {total_execution_time} seconds.")
-        else:
+        except TypeError:
             print("Dataset returned no results or is empty.")
 
         user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
