@@ -57,7 +57,7 @@ class QueryTimer:
         QueryTimer.overall_time += self.total_time
 
     def get_total_time(self):
-        return f"This took {round(self.total_time, 4)} seconds."
+        return f"\nThis took {round(self.total_time, 4)} seconds."
 
 
 def get_user_input(prompt, validation_list):
@@ -138,7 +138,7 @@ def load_data(city, file_path=""):
         try:
             print('Loading data...')
             df = pd.read_csv(file_path)
-            print(df.head(10))
+            print(f"{len(df.index)} rows imported...")
         except:
             print("Error loading bikeshare data")
             return None
@@ -173,6 +173,9 @@ def apply_filters(df, month, day):
     Returns:
         DataFrame
      """
+    # drop the source data index column as we don't need it
+    df = df.drop(df.columns[0], axis=1)
+
     # parse date fields into the correct format
     df = parse_date_columns(df, 'Start Time', 'End Time')
 
@@ -187,12 +190,17 @@ def apply_filters(df, month, day):
     # apply user selected filters for month(s) and day(s)
     df = df[df["month"].isin([i.title() for i in month])]
     df = df[df["weekday_name"].isin([d.title() for d in day])]
+    print(f"{len(df.index)} rows after filtering applied...")
 
     # drop rows with missing data as we can't use these to display our stats
-    if True in df.isnull().any():
-        df = df.dropna()
+    # move to indivual functions for stats
+    #df = df.dropna()
+    #print(f"{len(df.index)} rows after removing records with null values...")
     
     return df
+
+def time_stats_output(df, column, text_interpolation):
+    return f"The most common {text_interpolation} for travel is {df[column].value_counts().idxmax()} with {df[column].value_counts().max()} observations."
 
 
 def time_stats(df):
@@ -203,11 +211,13 @@ def time_stats(df):
     qt.set_start_time(time.time())
 
     # display the most common month - ignore if only one selection made
+    print(time_stats_output(df, 'month', 'month'))
 
     # display the most common day of week - ignore if only one selection made
+    print(time_stats_output(df, 'weekday_name', 'day of the week'))
 
     # display the most common start hour
-    
+    print(time_stats_output(df, 'hour', 'hour'))
 
     qt.set_end_time(time.time())
     print(qt.get_total_time())
@@ -270,27 +280,25 @@ def user_stats(df):
     print('-'*40)
 
 
-def print_dataframe(df, rows):
+def print_data_from_rows(df, num_rows=5):
     '''
-    prints dataframe in n row chunks and asks user to either print next 5 lines or quit
+    prints dataframe in n row chunks and asks user to either print next x lines or quit.
 
     Args:
         (DataFrame) df - takes a single dataframe to print out to the screen
-        (int) rows - how many rows to print
+        (int) num_rows - how many rows to print - default of 5
 
     Yields: 5 rows of the dataframe object
     '''
-    for row in df.iterrows():
-        pass
+    for i in range(0, len(df.index), num_rows):
+        print(f"Printing rows {i} to {i + num_rows} of {len(df.index)}...")
+        yield df.iloc[i: i+num_rows, :-4]
 
 
 def main():
     while True:
         city, month, day = get_filters()
         df = load_data(city, "data/")
-        # break of out program if data cannot be loaded
-        if df is None:
-            break
         df = apply_filters(df, month, day)
 
         try:
@@ -301,16 +309,17 @@ def main():
             total_execution_time = round(QueryTimer.overall_time, 2)
             print(f"Total execution time: {total_execution_time} seconds.")
         except TypeError:
-            print("Dataset returned no results or is empty.")
+            print("A problem was encountered while trying to process the data. Exiting...")
+            break
 
         user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
         if user_answer[0].lower() == 'y':
-            raw_or_cleaned_data = input("Would you like to view the raw data \
-                or clean, filtered data? Enter raw or clean.\n").strip()
-            if raw_or_cleaned_data.lower() == 'raw':
-                pass
-            elif raw_or_cleaned_data.lower() == 'clean':
-                pass
+            for chunk in print_data_from_rows(df):
+                print(chunk)
+                if input("\nView next 5 rows? (Y/n)\n").strip().lower()[0] == 'y':
+                    continue
+                else:
+                    break
             # function to show 5 rows of raw data at time - use generator?
             pass
 
