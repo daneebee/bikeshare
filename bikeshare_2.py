@@ -1,4 +1,4 @@
-import time
+import time # not used yet
 import os.path
 import pandas as pd
 import numpy as np
@@ -27,6 +27,12 @@ DAY = ("monday",
        "sunday")
 
 
+class UserFilterSelections:
+    city = []
+    day = []
+    month = []
+
+
 class QueryTimer:
     """ 
     class to log run time of panda functions
@@ -51,7 +57,7 @@ class QueryTimer:
         QueryTimer.overall_time += self.total_time
 
     def get_total_time(self):
-        return f"This took {round(self.total_time, 2)} seconds."
+        return f"This took {round(self.total_time, 4)} seconds."
 
 
 def get_user_input(prompt, validation_list):
@@ -115,7 +121,7 @@ def get_filters():
     return city, month, day
 
 
-def load_data(city, month, day):
+def load_data(city, file_path=""):
     """
     Loads data for the specified city and filters by month and day if applicable.
 
@@ -126,11 +132,13 @@ def load_data(city, month, day):
     Returns:
         df - Pandas DataFrame containing city data filtered by month and day
     """
-    file_path = "data/" + str(CITY_DATA[city[0]]).replace(" ", "_")
+    file_path += str(CITY_DATA[city[0]]).replace(" ", "_")
     
     if os.path.exists(file_path):
         try:
+            print('Loading data...')
             df = pd.read_csv(file_path)
+            print(df.head(10))
         except:
             print("Error loading bikeshare data")
             return None
@@ -138,9 +146,19 @@ def load_data(city, month, day):
         print(f"Bikeshare data not found in {file_path}")
         return None
 
-    # check if any columns contain NaN data - TESTING
-    print(df.isnull().any())
+    return df
 
+
+def parse_date_columns(df, *date_fields):
+    """
+    applies a datetime format to fields passed in as *args
+    """
+    try:
+        print('Parsing date fields...')
+        for date_field in date_fields:
+            df[date_field] = pd.to_datetime(df[date_field])
+    except TypeError:
+        print("Error formatting selected field in DataFrame")
     return df
 
 
@@ -155,19 +173,25 @@ def apply_filters(df, month, day):
     Returns:
         DataFrame
      """
+    # parse date fields into the correct format
+    df = parse_date_columns(df, 'Start Time', 'End Time')
 
+    print('Adding derived columns...')
     # add derived columns for filtering of data
-    df['Start Time'] = pd.to_datetime(df['Start Time'])
-    df['End Time'] = pd.to_datetime(df['End Time'])
-    df['day'] = df['Start Time'].dt.day
+    df['day_of_month'] = df['Start Time'].dt.day
     df['month'] = df['Start Time'].dt.month_name()
-    df['day_of_week'] = df['Start Time'].dt.weekday_name
+    df['weekday_name'] = df['Start Time'].dt.weekday_name
     df['hour'] = df['Start Time'].dt.hour
 
+    print('Applying user filters...')
     # apply user selected filters for month(s) and day(s)
     df = df[df["month"].isin([i.title() for i in month])]
-    df = df[df["day_of_week"].isin([d.title() for d in day])]
+    df = df[df["weekday_name"].isin([d.title() for d in day])]
 
+    # drop rows with missing data as we can't use these to display our stats
+    if True in df.isnull().any():
+        df = df.dropna()
+    
     return df
 
 
@@ -178,13 +202,12 @@ def time_stats(df):
     qt = QueryTimer()
     qt.set_start_time(time.time())
 
-    # display the most common month
-    if df['month'].value_counts() == 1:
-        pass
-    # display the most common day of week
+    # display the most common month - ignore if only one selection made
 
+    # display the most common day of week - ignore if only one selection made
 
     # display the most common start hour
+    
 
     qt.set_end_time(time.time())
     print(qt.get_total_time())
@@ -264,9 +287,11 @@ def print_dataframe(df, rows):
 def main():
     while True:
         city, month, day = get_filters()
-        df = load_data(city, month, day)
+        df = load_data(city, "data/")
+        # break of out program if data cannot be loaded
+        if df is None:
+            break
         df = apply_filters(df, month, day)
-
 
         try:
             time_stats(df)
@@ -280,6 +305,12 @@ def main():
 
         user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
         if user_answer[0].lower() == 'y':
+            raw_or_cleaned_data = input("Would you like to view the raw data \
+                or clean, filtered data? Enter raw or clean.\n").strip()
+            if raw_or_cleaned_data.lower() == 'raw':
+                pass
+            elif raw_or_cleaned_data.lower() == 'clean':
+                pass
             # function to show 5 rows of raw data at time - use generator?
             pass
 
