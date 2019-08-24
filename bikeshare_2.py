@@ -8,28 +8,31 @@ CITY_DATA = {'chicago': 'chicago.csv',
              'new york city': 'new_york_city.csv',
              'washington': 'washington.csv' }
 
-CITY = ("chicago",
-        "new york city",
-        "washington")
+CITY = ('chicago',
+        'new york city',
+        'washington')
 
-MONTH = ("january", 
-         "february",
-         "march", 
-         "april", 
-         "may", 
-         "june")
+MONTH = ('january', 
+         'february',
+         'march', 
+         'april', 
+         'may', 
+         'june')
 
-DAY = ("monday",
-       "tuesday",
-       "wednesday",
-       "thursday",
-       "friday",
-       "saturday",
-       "sunday")
+DAY = ('monday',
+       'tuesday',
+       'wednesday',
+       'thursday',
+       'friday',
+       'saturday',
+       'sunday')
 
 total_run_time = 0
 
 def query_time(func):
+    """
+    decorator function to log function execution time and capture total program execution time
+    """
     def wrapper_function(*args, **kwargs):
         global total_run_time
 
@@ -44,31 +47,39 @@ def query_time(func):
 
 
 def get_user_input(prompt, validation_list):
-    """ doc string goes here """
+    """ 
+    prompts the user to input their selections and validates those selections are correct against a defined input list
+
+    Arguments:
+        (str) prompt - prompt to display in the terminal
+        (list) validation_list - list of strings to validate that input is within expected values
+    Returns:
+        (list) user_input - list of strings holding users selections
+    """
     print(prompt)
     
-    print("Type 'view' to list valid selections")
-    print("-" * len(prompt))
+    print('Type \'view\' to list valid selections')
+    print('-' * len(prompt))
 
     while True:
         user_input = list(map(str.strip, input().lower().split(",")))
 
-        if "view" in user_input:
-            print(", ".join(list(x.title() for x in validation_list)))
+        if 'view' in user_input:
+            print(', '.join(list(x.title() for x in validation_list)))
             continue
-        elif "all" in user_input:
+        elif 'all' in user_input:
             return validation_list
         elif verify_user_input(user_input, validation_list):
             break
         else:
-            print("Please enter valid input parameters: ")
+            print('Please enter valid input parameters: ')
 
     return user_input
 
 def verify_user_input(user_input, validation_list):
-    ''' 
+    """
     Check if user input exists in predefined tuples
-    '''
+    """
     for i in user_input:
         if not i in validation_list:
             return False
@@ -84,9 +95,9 @@ def get_filters():
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     """
     print('\nWelcome! Let\'s explore some US bikeshare data!\n')
-    print("Please input any multiple selections in a comma seperated list")
+    print('Please input any multiple selections in a comma seperated list')
     # get user input for city (chicago, new york city, washington). HINT: Use a while loop to handle invalid inputs
-    city = get_user_input("Which city would you like to view? (Please select only one)",
+    city = get_user_input('Which city would you like to view? (Please select only one)',
                     CITY)
 
     # if user types in multiple cities, take first selection only
@@ -94,17 +105,17 @@ def get_filters():
         print(f"Multiple city selections made, only {str(city[0]).title()} will be used...")
 
     # get user input for month (all, january, february, ... , june)
-    month = get_user_input("\nPlease select month(s) or type 'all':",
+    month = get_user_input('\nPlease select month(s) or type \'all\':',
                             MONTH)
 
     # get user input for day of week (all, monday, tuesday, ... sunday)
-    day = get_user_input("\nPlease select day(s) of the week or type 'all':",
+    day = get_user_input('\nPlease select day(s) of the week or type \'all\':',
                             DAY)
 
     return city, month, day
 
 
-def load_data(city, file_path=""):
+def load_data(city, file_path=''):
     """
     Loads data for the specified city and filters by month and day if applicable.
 
@@ -113,9 +124,9 @@ def load_data(city, file_path=""):
         (str) month - name of the month to filter by, or "all" to apply no month filter
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     Returns:
-        df - Pandas DataFrame containing city data filtered by month and day
+        (DataFrame) df - Pandas DataFrame containing city data filtered by month and day
     """
-    file_path += str(CITY_DATA[city[0]]).replace(" ", "_")
+    file_path += str(CITY_DATA[city[0]]).replace(' ', '_')
     
     if os.path.exists(file_path):
         try:
@@ -123,7 +134,7 @@ def load_data(city, file_path=""):
             df = pd.read_csv(file_path)
             print(f"{len(df.index)} rows imported...")
         except:
-            print("Error loading bikeshare data")
+            print('Error loading bikeshare data')
             return None
     else:
         print(f"Bikeshare data not found in {file_path}")
@@ -135,13 +146,16 @@ def load_data(city, file_path=""):
 def parse_date_columns(df, *date_fields):
     """
     applies a datetime format to fields passed in as *args
+
+    Returns:
+        (DataFrame) df - a dataframe with the parsed data fields
     """
     try:
         print('Parsing date fields...')
         for date_field in date_fields:
             df[date_field] = pd.to_datetime(df[date_field])
     except TypeError:
-        print("Error formatting selected field in DataFrame")
+        print('Error formatting selected field in DataFrame')
     return df
 
 
@@ -154,7 +168,7 @@ def apply_filters(df, month, day):
         (list) month - Selected month(s)
         (list) day - Selected day(s)
     Returns:
-        DataFrame
+        (DataFrame) - a filtered pandas DataFrame
      """
     # drop the source data index column as we don't need it
     df = df.drop(df.columns[0], axis=1)
@@ -172,20 +186,25 @@ def apply_filters(df, month, day):
 
     print('Applying user filters...')
     # apply user selected filters for month(s) and day(s)
-    df = df[df["month"].isin([i.title() for i in month])]
-    df = df[df["weekday_name"].isin([d.title() for d in day])]
-    print(f"{len(df.index)} rows after filtering applied...")
-
-    # drop rows with missing data as we can't use these to display our stats
-    # move to indivual functions for stats
-    #df = df.dropna()
-    #print(f"{len(df.index)} rows after removing records with null values...")
+    df = df[df['month'].isin([i.title() for i in month])]
+    df = df[df['weekday_name'].isin([d.title() for d in day])]
+    print(f'{len(df.index)} rows after filtering applied...')
 
     return df
 
 
 def stats_output(df, column, text_interpolation):
-    return f"The most common {text_interpolation} is '{df[column].value_counts().idxmax()}' with {df[column].value_counts().max()} observations."
+    '''
+    Generate a string to be output to the console for time_stats and station_stats
+
+    Args:
+        (DataFrame) df - dataframe to calculate value counts on
+        (str) column - column in data frame to apply counts
+        (str) text_interpolation - text to inject into returned string
+    Returns:
+        (str) - interpolated string output
+    '''
+    return f'The most common {text_interpolation} is \'{df[column].value_counts().idxmax()}\' with {df[column].value_counts().max()} observations.'
 
 
 @query_time
@@ -229,12 +248,12 @@ def trip_duration_stats(df):
     # display total travel time
     total_travel_time = df['Trip Duration'].sum()
     total_travel_time_hours = total_travel_time / 60 / 60
-    print(f"Total Travel time was {round(total_travel_time_hours)} hours ({total_travel_time} seconds).")
+    print(f'Total Travel time was {round(total_travel_time_hours)} hours ({total_travel_time} seconds).')
 
     # display mean travel time
     mean_travel_time = df['Trip Duration'].mean()
     mean_travel_time_delta = str(timedelta(seconds=mean_travel_time))
-    print(f"The mean travel time was {mean_travel_time_delta} ({mean_travel_time} seconds.)")
+    print(f'The mean travel time was {mean_travel_time_delta} ({mean_travel_time} seconds.)')
 
 
 @query_time
@@ -248,18 +267,24 @@ def user_stats(df):
     print(df['User Type'].value_counts())
 
     # Display counts of gender
-    print("\nGender count:")
-    print(df['Gender'].value_counts())
+    try:
+        print("\nGender count:")
+        print(df['Gender'].value_counts())
+    except KeyError:
+        print('Gender field not found in this dataset. Skipping...')
 
     # Display earliest, most recent, and most common year of birth
-    print("\nBirth year stats:")
-    print(f"Earliest: {str(int(df['Birth Year'].min()))}")
-    print(f"Most recent: {str(int(df['Birth Year'].max()))}")
-    print(f"Most common: {str(int(df['Birth Year'].value_counts().idxmax()))}")
+    try:
+        print("\nBirth year stats:")
+        print(f"Earliest: {str(int(df['Birth Year'].min()))}")
+        print(f"Most recent: {str(int(df['Birth Year'].max()))}")
+        print(f"Most common: {str(int(df['Birth Year'].value_counts().idxmax()))}")
+    except KeyError:
+        print('Birth Year field not found in this dataset. Skipping...')
 
     
 def print_data_from_rows(df, num_rows=5, column_trim=0):
-    '''
+    """
     prints dataframe in n row chunks and asks user to either print next x lines or quit.
 
     Args:
@@ -269,7 +294,7 @@ def print_data_from_rows(df, num_rows=5, column_trim=0):
               derived columns when viewing the data
 
     Yields: 5 rows of the dataframe object
-    '''
+    """
     for i in range(0, len(df.index), num_rows):
         print(f"Printing rows {i} to {i + num_rows} of {len(df.index)}...")
         yield df.iloc[i: i+num_rows, :-column_trim]
@@ -278,7 +303,10 @@ def print_data_from_rows(df, num_rows=5, column_trim=0):
 def main():
     while True:
         city, month, day = get_filters()
-        df = load_data(city, "data/")
+        df = load_data(city, 'data/')
+        if df is None:
+            print('No data is loaded into the DataFrame. Are the files saved in the correct directory?')
+            break
         df = apply_filters(df, month, day)
 
         try:
@@ -288,14 +316,14 @@ def main():
             user_stats(df)
             print(f"Total execution time: {round(total_run_time,4)} seconds.")
         except TypeError:
-            print("A problem was encountered while trying to process the data. Exiting...")
+            print('A problem was encountered while trying to process the data. Exiting...')
             break
 
-        user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
+        user_answer = input('Would you like to view the raw data? Enter yes or no.\n').strip()
         if user_answer[0].lower() == 'y':
             for chunk in print_data_from_rows(df, column_trim=5):
                 print(chunk)
-                if input("\nView next 5 rows? (Y/n)\n").strip().lower()[0] == 'y':
+                if input('\nView next 5 rows? (Y/n)\n').strip().lower()[0] == 'y':
                     continue
                 else:
                     break
@@ -305,5 +333,5 @@ def main():
             break
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 	main()
