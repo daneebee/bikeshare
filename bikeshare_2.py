@@ -1,4 +1,5 @@
-import time # not used yet
+from datetime import timedelta
+import time
 import os.path
 import pandas as pd
 import numpy as np
@@ -26,38 +27,20 @@ DAY = ("monday",
        "saturday",
        "sunday")
 
+total_run_time = 0
 
-class UserFilterSelections:
-    city = []
-    day = []
-    month = []
+def query_time(func):
+    def wrapper_function(*args, **kwargs):
+        global total_run_time
 
-
-class QueryTimer:
-    """ 
-    class to log run time of panda functions
-    log start and end time to auto-calculate total running time
-    stores class variable 'overall_time' to keep track of overall total running time
-    for all instances of QueryTimer class
-
-    Methods:
-        set_start_time - log function start time
-        set_end_time - log function end time, total time and overall time
-                       of all functions run so far
-        get_total_time - return f string of total function run time
-    """
-    overall_time = 0
-
-    def set_start_time(self, time):
-        self.start_time = time
-
-    def set_end_time(self, time):
-        self.end_time = time
-        self.total_time = self.end_time - self.start_time
-        QueryTimer.overall_time += self.total_time
-
-    def get_total_time(self):
-        return f"\nThis took {round(self.total_time, 4)} seconds."
+        start_time = time.time()
+        run_func = func(*args, **kwargs)
+        total_time = time.time() - start_time
+        total_run_time += total_time
+        print(f"\nThis took {round(total_time, 4)} seconds.")
+        print('-'*40)
+        return run_func
+    return wrapper_function
 
 
 def get_user_input(prompt, validation_list):
@@ -185,6 +168,7 @@ def apply_filters(df, month, day):
     df['month'] = df['Start Time'].dt.month_name()
     df['weekday_name'] = df['Start Time'].dt.weekday_name
     df['hour'] = df['Start Time'].dt.hour
+    df['start_end_stations'] = df['Start Station'] + '/' + df['End Station']
 
     print('Applying user filters...')
     # apply user selected filters for month(s) and day(s)
@@ -196,103 +180,99 @@ def apply_filters(df, month, day):
     # move to indivual functions for stats
     #df = df.dropna()
     #print(f"{len(df.index)} rows after removing records with null values...")
-    
+
     return df
 
-def time_stats_output(df, column, text_interpolation):
-    return f"The most common {text_interpolation} for travel is {df[column].value_counts().idxmax()} with {df[column].value_counts().max()} observations."
+
+def stats_output(df, column, text_interpolation):
+    return f"The most common {text_interpolation} is '{df[column].value_counts().idxmax()}' with {df[column].value_counts().max()} observations."
 
 
+@query_time
 def time_stats(df):
     """Displays statistics on the most frequent times of travel."""
 
     print('\nCalculating The Most Frequent Times of Travel...\n')
-    qt = QueryTimer()
-    qt.set_start_time(time.time())
 
     # display the most common month - ignore if only one selection made
-    print(time_stats_output(df, 'month', 'month'))
+    print(stats_output(df, 'month', 'month for travel'))
 
     # display the most common day of week - ignore if only one selection made
-    print(time_stats_output(df, 'weekday_name', 'day of the week'))
+    print(stats_output(df, 'weekday_name', 'day of the week for travel'))
 
     # display the most common start hour
-    print(time_stats_output(df, 'hour', 'hour'))
+    print(stats_output(df, 'hour', 'hour of the day for travel'))
 
-    qt.set_end_time(time.time())
-    print(qt.get_total_time())
-    print('-'*40)
 
+@query_time
 def station_stats(df):
     """Displays statistics on the most popular stations and trip."""
 
     print('\nCalculating The Most Popular Stations and Trip...\n')
-    qt = QueryTimer()
-    qt.set_start_time(time.time())
 
     # display most commonly used start station
-
+    print(stats_output(df, 'Start Station', 'start station'))
 
     # display most commonly used end station
-
+    print(stats_output(df, 'End Station', 'end station'))
 
     # display most frequent combination of start station and end station trip
-
-    qt.set_end_time(time.time())
-    print(qt.get_total_time())
-    print('-'*40)
+    print(stats_output(df, 'start_end_stations', 'combination of start and end station'))
 
 
+@query_time
 def trip_duration_stats(df):
     """Displays statistics on the total and average trip duration."""
 
     print('\nCalculating Trip Duration...\n')
-    qt = QueryTimer()
-    qt.set_start_time(time.time())
 
     # display total travel time
-
+    total_travel_time = df['Trip Duration'].sum()
+    total_travel_time_hours = total_travel_time / 60 / 60
+    print(f"Total Travel time was {round(total_travel_time_hours)} hours ({total_travel_time} seconds).")
 
     # display mean travel time
+    mean_travel_time = df['Trip Duration'].mean()
+    mean_travel_time_delta = str(timedelta(seconds=mean_travel_time))
+    print(f"The mean travel time was {mean_travel_time_delta} ({mean_travel_time} seconds.)")
 
-    qt.set_end_time(time.time())
-    print(qt.get_total_time())
-    print('-'*40)
 
-
+@query_time
 def user_stats(df):
     """Displays statistics on bikeshare users."""
 
     print('\nCalculating User Stats...\n')
-    qt = QueryTimer()
-    qt.set_start_time(time.time())
 
     # Display counts of user types
-
+    print("User Type count:")
+    print(df['User Type'].value_counts())
 
     # Display counts of gender
-
+    print("\nGender count:")
+    print(df['Gender'].value_counts())
 
     # Display earliest, most recent, and most common year of birth
+    print("\nBirth year stats:")
+    print(f"Earliest: {str(int(df['Birth Year'].min()))}")
+    print(f"Most recent: {str(int(df['Birth Year'].max()))}")
+    print(f"Most common: {str(int(df['Birth Year'].value_counts().idxmax()))}")
 
-    qt.set_end_time(time.time())
-    print(qt.get_total_time())
-    print('-'*40)
-
-
-def print_data_from_rows(df, num_rows=5):
+    
+def print_data_from_rows(df, num_rows=5, column_trim=0):
     '''
     prints dataframe in n row chunks and asks user to either print next x lines or quit.
 
     Args:
         (DataFrame) df - takes a single dataframe to print out to the screen
         (int) num_rows - how many rows to print - default of 5
+        (int) column_trim - how many colums to remove from the end of dataFrame - used to remove
+              derived columns when viewing the data
 
     Yields: 5 rows of the dataframe object
     '''
     for i in range(0, len(df.index), num_rows):
         print(f"Printing rows {i} to {i + num_rows} of {len(df.index)}...")
-        yield df.iloc[i: i+num_rows, :-4]
+        yield df.iloc[i: i+num_rows, :-column_trim]
 
 
 def main():
@@ -306,22 +286,19 @@ def main():
             station_stats(df)
             trip_duration_stats(df)
             user_stats(df)
-            total_execution_time = round(QueryTimer.overall_time, 2)
-            print(f"Total execution time: {total_execution_time} seconds.")
+            print(f"Total execution time: {round(total_run_time,4)} seconds.")
         except TypeError:
             print("A problem was encountered while trying to process the data. Exiting...")
             break
 
         user_answer = input("Would you like to view the raw data? Enter yes or no.\n").strip()
         if user_answer[0].lower() == 'y':
-            for chunk in print_data_from_rows(df):
+            for chunk in print_data_from_rows(df, column_trim=5):
                 print(chunk)
                 if input("\nView next 5 rows? (Y/n)\n").strip().lower()[0] == 'y':
                     continue
                 else:
                     break
-            # function to show 5 rows of raw data at time - use generator?
-            pass
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
