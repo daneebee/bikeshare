@@ -48,7 +48,7 @@ def query_time(func):
 
 def get_user_input(prompt, validation_list):
     """ 
-    prompts the user to input their selections and validates those selections are correct against a defined input list
+    prompts user to input their selections and validates those selections are correct against a defined input list
 
     Arguments:
         (str) prompt - prompt to display in the terminal
