@@ -1,6 +1,6 @@
 # Bikeshare
 
-A data analysis program written in python to explore and analyse bikeshare data across 3 cities in the United States.
+A data analysis program written in python to explore and analyse bikeshare data across 3 cities in the United States. This project is part of the Udacity course 'Programming for Data Analysis'.
 
 ## Instructions
 
