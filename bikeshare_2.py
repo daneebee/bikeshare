@@ -48,7 +48,7 @@ def query_time(func):
 
 def get_user_input(prompt, validation_list):
     """ 
-    prompts the user to input their selections and validates those selections are correct against a defined input list
+    prompts user to input their selections and validates those selections are correct against a defined input list
 
     Arguments:
         (str) prompt - prompt to display in the terminal
@@ -305,7 +305,7 @@ def main():
         city, month, day = get_filters()
         df = load_data(city, 'data/')
         if df is None:
-            print('No data is loaded into the DataFrame. Are the files saved in the correct directory?')
+            print('No data is loaded into DataFrame. Are the files saved in the correct directory?')
             break
         df = apply_filters(df, month, day)
 
