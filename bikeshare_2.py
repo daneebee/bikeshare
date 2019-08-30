@@ -305,7 +305,7 @@ def main():
         city, month, day = get_filters()
         df = load_data(city, 'data/')
         if df is None:
-            print('No data is loaded into the DataFrame. Are the files saved in the correct directory?')
+            print('No data is loaded into DataFrame. Are the files saved in the correct directory?')
             break
         df = apply_filters(df, month, day)
 
